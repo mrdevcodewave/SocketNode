@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket Thing1</title>
+</head>
+<style>
+    .grid {
+      display: table;
+      border-spacing: 5px
+    }
+    .row {
+      display: table-row
+    }
+    .cell {
+      width: 50px;
+      height: 50px;
+      background: grey;
+      display: table-cell;
+    }
+    .blue {
+      background: rgb(34, 0, 255)
+    }
+    .green {
+      background: rgb(9, 255, 30)
+    }
+    .green,.blue{
+    text-align: center;
+    vertical-align: middle;
+    color: white;
+    font-size: 40px;
+    pointer-events: none;
+}
+</style>
+<body>
+    Client1
+    <!-- <button onclick="sendMessage()">Send Msg</button> -->
+    <div class="grid">
+        <div class="row">
+            <div class="cell" id="box1" onclick="SetTarget(1)"></div>
+            <div class="cell" id="box2" onclick="SetTarget(2)"></div>
+            <div class="cell" id="box3" onclick="SetTarget(3)"></div>
+        </div>
+        <div class="row">
+            <div class="cell" id="box4" onclick="SetTarget(4)"></div>
+            <div class="cell" id="box5" onclick="SetTarget(5)"></div>
+            <div class="cell" id="box6" onclick="SetTarget(6)"></div>
+        </div>
+        <div class="row">
+            <div class="cell" id="box7" onclick="SetTarget(7)"></div>
+            <div class="cell" id="box8" onclick="SetTarget(8)"></div>
+            <div class="cell" id="box9" onclick="SetTarget(9)"></div>
+        </div>
+    </div>
+</body>
+<script>
+    // Create WebSocket connection.
+    const socket = new WebSocket('ws://localhost:3000');
+
+    // Connection opened
+    socket.addEventListener('open', function (event) {
+        console.log('Connected to WS Server');
+    });
+
+    // Listen for messages
+    let myTurn = true;
+    socket.addEventListener('message', function (event) {
+        console.log('Message from server ', event.data);
+
+        const obj = JSON.parse(event.data);
+        console.log(obj,'obj');
+        if(obj.type==1){
+            window.localStorage.setItem('userId', obj.userId);
+        }else if(obj.type==2){
+            var element = document.getElementById('box'+obj.box_id);
+            userId = window.localStorage.getItem('userId');
+            if(obj.userId==userId){
+                element.classList.add("green");
+                element.innerHTML = "O";
+                myTurn = false;
+            }else{
+                element.classList.add("blue");
+                element.innerHTML = "X";
+                myTurn = true;
+            }
+        }else{
+            alert('Wait for opponent');
+        }
+        
+        // alert('Message from server '+event.data);
+    });
+
+    const SetTarget = (id) => {
+        if(myTurn == false){
+            alert('Wait for opponent turn');
+            return false;
+        }
+        const userId = window.localStorage.getItem('userId');
+        socket.send(JSON.stringify({message:'Hello From Client1!',box_id:id,type:2,userId:userId}));
+    }
+
+
+</script>
+</html>
