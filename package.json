@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
+    "node-localstorage": "^2.2.1",
     "serve-handler": "^6.1.5",
     "ws": "^7.3.0"
   },

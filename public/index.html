@@ -36,23 +36,10 @@
 <body>
     Client1
     <!-- <button onclick="sendMessage()">Send Msg</button> -->
-    <div class="grid">
-        <div class="row">
-            <div class="cell" id="box1" onclick="SetTarget(1)"></div>
-            <div class="cell" id="box2" onclick="SetTarget(2)"></div>
-            <div class="cell" id="box3" onclick="SetTarget(3)"></div>
-        </div>
-        <div class="row">
-            <div class="cell" id="box4" onclick="SetTarget(4)"></div>
-            <div class="cell" id="box5" onclick="SetTarget(5)"></div>
-            <div class="cell" id="box6" onclick="SetTarget(6)"></div>
-        </div>
-        <div class="row">
-            <div class="cell" id="box7" onclick="SetTarget(7)"></div>
-            <div class="cell" id="box8" onclick="SetTarget(8)"></div>
-            <div class="cell" id="box9" onclick="SetTarget(9)"></div>
-        </div>
+    <div class="grid" id="grid">
+        
     </div>
+
 </body>
 <script>
     // Create WebSocket connection.
@@ -72,6 +59,7 @@
         console.log(obj,'obj');
         if(obj.type==1){
             window.localStorage.setItem('userId', obj.userId);
+            window.localStorage.setItem('roomID', obj.roomID);
         }else if(obj.type==2){
             var element = document.getElementById('box'+obj.box_id);
             userId = window.localStorage.getItem('userId');
@@ -97,9 +85,26 @@
             return false;
         }
         const userId = window.localStorage.getItem('userId');
-        socket.send(JSON.stringify({message:'Hello From Client1!',box_id:id,type:2,userId:userId}));
+        const roomID = window.localStorage.getItem('roomID');
+        socket.send(JSON.stringify({message:'Hello From Client1!',box_id:id,type:2,userId:userId,roomID:roomID}));
     }
 
 
+</script>
+
+<script>
+
+    let box_i = 1;
+    let boxes = '';
+    for(let i=1;i<=3;i++){
+        boxes += `<div class="row">`;
+        for(let j=1;j<=3;j++,box_i++){
+            boxes += `<div class="cell" id="box${box_i}" onclick="SetTarget(${box_i})"></div>`;
+        }
+        boxes += `</div>`;
+    }
+    document.getElementById('grid').innerHTML = boxes;
+
+    
 </script>
 </html>
