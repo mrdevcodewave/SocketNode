@@ -28,7 +28,7 @@ wss.getUniqueID = function () {
 
 function getRoomID(userId){
 
-  console.log(rooms,'rsd');
+  // console.log(rooms,'rsd');
   //room exists or not
   let roomOb = '';
   if(rooms.length>0){
@@ -39,7 +39,7 @@ function getRoomID(userId){
         return room.roomID
       }
     });
-    console.log(roomOb.roomID,'dd');
+    // console.log(roomOb.roomID,'dd');
   }
 
   if(roomOb){
@@ -52,7 +52,7 @@ function getRoomID(userId){
       users:[{userName:"A",userId:userId,boxes:[]}],
       }
     rooms.push(roomObject);
-    console.log(roomObject.roomID,'dds');
+    console.log(roomObject.roomID,'new room');
 
     return roomObject.roomID;
   }
@@ -63,11 +63,8 @@ function getRoomID(userId){
 
 function checkResult(box_id,userId,roomId){
 
-  let returnObj = {type:1,message:'Win'};
-  // console.log(JSON.stringify(box_id),'box_id');
-  // console.log(JSON.stringify(userId),'userId');
-  // console.log(JSON.stringify(roomId),'roomId');
-  // console.log(JSON.stringify(rooms),'rooms');
+  let returnObj = {type:1,message:'Win'};//0continue 1 win 2 draw 3 no opponent 4 no connection
+
 
   let boxes =[];
   let room = rooms.filter((roomObject)=>{
@@ -79,14 +76,21 @@ function checkResult(box_id,userId,roomId){
 
   if(room){
 
-    bxs = room[0].users.forEach(user=>{
-      if(user.userId==userId){
-        user.boxes.push(box_id);
-        return user.boxes;
+    bxs = room[0].users.find(user=>{
+      if (!user.boxes.includes(box_id)) {
+        if(user.userId==userId){
+          
+            user.boxes.push(box_id);
+          
+          return user.boxes;
+        }
       }
+
     });
-    if(room[0].users.length ==2 && bxs){
-      boxes = bxs;
+    // console.log(room[0].users,'ad');
+    // console.log(bxs,'adbx');
+    if(room[0].users.length ==2 && bxs.boxes){
+      boxes = bxs.boxes;
     }else{
      return {type:3,message:'No opponent is there'};
     }
@@ -115,9 +119,9 @@ function checkResult(box_id,userId,roomId){
     if(total==9){
       return {type:5,message:'Match draw'};
     }
-    return {type:5,message:'Play'};
+    return {type:0,message:'Continue Playing'};
   }else{
-    return {type:2,message:'Winner'};
+    return {type:1,message:'Winner'};
   }
   
 }
@@ -145,9 +149,6 @@ wss.on('connection', function connection(ws) {
   ws.id = wss.getUniqueID();
   ws.roomID = getRoomID(ws.id);
 
- 
-  // ws.id = wss.getUniqueID();
-
 
   console.log('A new client Connected!');
  
@@ -157,33 +158,24 @@ wss.on('connection', function connection(ws) {
     userObj.userName = "B";
   }
 
-  if(users.length>2){
-    msg = JSON.stringify({message:'Slot not empty',type:1,userId:userObj.userId,userData:userObj})//1 for new user 2 for data exchange
-    return false;
-  }
-
   users.push(userObj);
-
-  //Setting localStorage Item
-  localStorage.setItem('UserData',users)
   
   msg = JSON.stringify({message:'Welcome New Client!',type:1,userId:userObj.userId,roomID:ws.roomID,userData:userObj})//1 for new user 2 for data exchange
 
-
-  
   ws.send(msg);
 
   ws.on('message', function incoming(message) {
 
     // console.log(JSON.parse(message).message,'prs');1568
     const neMessage = JSON.parse(message);
-    neMessage.conclution = checkResult(neMessage.box_id,neMessage.userId,neMessage.roomID)
-    // console.log('received: %s', neMessage);   
+    neMessage.conclution = neMessage.type!=8?checkResult(neMessage.box_id,neMessage.userId,neMessage.roomID):'';
+    
+    message = JSON.stringify(neMessage);
+    console.log('received: %s', message);   
 
     wss.clients.forEach(function each(client) {
       if (client.roomID == ws.roomID && client.readyState === WebSocket.OPEN) {//client !== ws && 
-        // console.log('client',client.id)
-        // console.log('room',client.roomID)
+       
         client.send(message);
       }
     });

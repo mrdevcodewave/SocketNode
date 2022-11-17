@@ -3,21 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Socket Thing1</title>
+    <title>Game 2 player</title>
 </head>
 <style>
     .grid {
       display: table;
-      border-spacing: 5px
+      border-spacing: 5px;
+      margin: auto;
     }
     .row {
       display: table-row
     }
     .cell {
-      width: 50px;
-      height: 50px;
-      background: grey;
-      display: table-cell;
+        width: 134px;
+    height: 108px;
+    background: grey;
+    display: table-cell;
+    border-radius: 31px;
     }
     .blue {
       background: rgb(34, 0, 255)
@@ -32,18 +34,75 @@
     font-size: 40px;
     pointer-events: none;
 }
+.userDetails,.gameDetails,.chatBox{
+    margin: auto;
+    text-align: center;
+    border: 1px solid grey;
+    width: 474px;
+    background: antiquewhite;
+    padding: 5px;
+    border-radius: 39px;
+}
+.myChat{
+    color:white;
+    background-color: #b2b2b2;
+
+    /* border:1px solid grey; */
+    border-radius: 20px;
+    padding:8px;
+    /* margin-left: 20%; */
+    max-width: 70%;
+    text-align: right;
+    width: max-content;
+}
+.opChat{
+    color: white;
+    background-color: #79C7C5;
+    /* border:1px solid green; */
+    border-radius: 20px;
+    padding:8px;
+    /* margin-right: 20%; */
+    max-width: 70%;
+    text-align: left;
+    width: max-content;
+}
+#chatDetail{
+    background: #F9FBFF;
+    padding: 22px 10px 10px 10px;
+}
+
 </style>
 <body>
-    Client1
+    <div class="userDetails">
+        User ID <p id="userId"></p>
+    </div>
     <!-- <button onclick="sendMessage()">Send Msg</button> -->
     <div class="grid" id="grid">
         
     </div>
+    <div class="gameDetails">
+        Message <p id="result"></p>
+    </div>
+
+    <div class="chatBox">
+        Chat Box
+        <div id="chatDetail">
+            <p class="myChat">Hii demo</p>
+            <p class="opChat">Hello demo</p>
+        </div>
+        <div id="sendMessage">
+            <input name="message" type="text" id="message">
+            <button type="button" onclick="sendMessage()">Send</button>
+        </div>
+        
+    <div>
+    
+
 
 </body>
 <script>
     // Create WebSocket connection.
-    const socket = new WebSocket('ws://localhost:3000');
+    const socket = new WebSocket('ws://192.168.0.179:3000');
 
     // Connection opened
     socket.addEventListener('open', function (event) {
@@ -54,23 +113,50 @@
     let myTurn = true;
     socket.addEventListener('message', function (event) {
         console.log('Message from server ', event.data);
-
+        userId = window.localStorage.getItem('userId');
         const obj = JSON.parse(event.data);
         console.log(obj,'obj');
-        if(obj.type==1){
+        if(obj.type==8){
+            let chatClass='opChat';
+            if(obj.userId==userId) chatClass='myChat';
+
+            chatElement = document.getElementById('chatDetail');
+            chatElement.innerHTML = chatElement.innerHTML+'<p class="'+chatClass+'">'+obj.message+'</p>';
+        }
+        else if(obj.type==1){
+            document.getElementById('userId').innerHTML = obj.userId+'(Room -'+obj.roomID+')';
             window.localStorage.setItem('userId', obj.userId);
             window.localStorage.setItem('roomID', obj.roomID);
         }else if(obj.type==2){
+            if(obj.conclution.type==3){
+                alert('Wait for opponent');
+                return false;
+            }
+            
             var element = document.getElementById('box'+obj.box_id);
-            userId = window.localStorage.getItem('userId');
             if(obj.userId==userId){
                 element.classList.add("green");
                 element.innerHTML = "O";
                 myTurn = false;
+                res = 'You -'+obj.conclution.message;
+                if(obj.conclution.type==0){
+                    res = 'Opponents turn -'+obj.conclution.message;
+                }
             }else{
                 element.classList.add("blue");
                 element.innerHTML = "X";
                 myTurn = true;
+                res = obj.userId+'-'+obj.conclution.message;
+                if(obj.conclution.type==0){
+                    res = 'Your turn -'+obj.conclution.message;
+                }
+            }
+            document.getElementById('result').innerHTML = res;
+            if(obj.conclution.type!=0){
+                myTurn = false;
+            }
+            if(obj.conclution.type==1){
+                alert(res);
             }
         }else{
             alert('Wait for opponent');
@@ -89,6 +175,18 @@
         socket.send(JSON.stringify({message:'Hello From Client1!',box_id:id,type:2,userId:userId,roomID:roomID}));
     }
 
+    const sendMessage = () => {
+        
+        const userId = window.localStorage.getItem('userId');
+        const roomID = window.localStorage.getItem('roomID');
+        const message = document.getElementById('message').value;
+        if(message.length>=1){
+            socket.send(JSON.stringify({message:message,box_id:'',type:8,userId:userId,roomID:roomID}));
+            document.getElementById('message').value = '';
+        }else{
+            alert('Please enter message first!');
+        }
+    }
 
 </script>
 
